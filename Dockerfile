@@ -2,15 +2,18 @@ FROM ubuntu:25.04 as downloader
 
 ARG GLIBC_VERSION=2.38
 
-RUN apt update && apt install -y git clang-20 make gawk bison wget lbzip2
+RUN apt update && apt install -y git clang-20 make gawk bison wget lbzip2 zstd jq
 RUN git clone --depth 1 --branch release/$GLIBC_VERSION/master https://sourceware.org/git/glibc.git /glibc
 
 COPY glibc_kernel_versions.txt /glibc_kernel_versions.txt
 RUN cat /glibc_kernel_versions.txt
 
-RUN export KERNEL_VERSION=$(cat /glibc_kernel_versions.txt | grep $GLIBC_VERSION | cut -f2) && \
-    wget https://github.com/cerisier/kernel-headers/releases/download/$KERNEL_VERSION-20250511/$KERNEL_VERSION-20250511.tar.gz && \
-    tar -xzf $KERNEL_VERSION-20250511.tar.gz && \
+RUN set -x && export KERNEL_VERSION=$(cat /glibc_kernel_versions.txt | grep $GLIBC_VERSION | cut -f2) && \
+    wget -O /index.json https://cerisier.github.io/kernel-headers/index.json && \
+    export DOWNLOAD_URL=$(cat /index.json | jq -r ".[\"$KERNEL_VERSION\"] | to_entries | .[0].value.url") && \
+    export FILENAME=$(basename "$DOWNLOAD_URL") && \
+    wget "$DOWNLOAD_URL" -O "$FILENAME" && ls $FILENAME && \
+    tar -xvf "$FILENAME" && \
     mv /$KERNEL_VERSION /kernel-headers
 
 FROM downloader as builder
