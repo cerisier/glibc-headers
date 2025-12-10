@@ -94,11 +94,13 @@ cat >> "$OUTPUT_DIR/index.html" <<EOF
 </html>
 EOF
 
+python3 generate_index.py > "$OUTPUT_DIR/index.json"
+
 # 6. publish to gh-pages branch
 git checkout --orphan gh-pages
 git rm -rf .
 cp -R "$OUTPUT_DIR"/* .
-git add 2.* index.html
+git add 2.* index.html index.json
 git commit -m "chore: regenerate gh-pages release index"
 git push -u origin gh-pages --force
 
