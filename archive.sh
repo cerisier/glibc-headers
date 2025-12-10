@@ -4,7 +4,13 @@ set -eux
 
 DATE=$(date +%Y%m%d)
 
-for header_dir in headers/*; do
+GLIBC_KERNEL_VERSIONS_FILE="glibc_kernel_versions.txt"
+GLIBC_VERSIONS=(
+	$(git diff --unified=0 $GLIBC_KERNEL_VERSIONS_FILE| sed -n 's/^\+\(.*\)/\1/p' | grep -v '+' | cut -f1)
+)
+headers=("${GLIBC_VERSIONS[@]/#/headers/}")
+
+for header_dir in "${headers[@]}"; do
     version=$(basename "$header_dir")
     tag_name="${version}-${DATE}"
     echo "Processing $header_dir, tag $tag_name"

@@ -2,8 +2,13 @@
 
 set -euo pipefail
 
-for version in $(seq 41 -1 28); do
-    version=2.$version
+GLIBC_KERNEL_VERSIONS_FILE="glibc_kernel_versions.txt"
+GLIBC_VERSIONS=(
+	$(git diff --unified=0 $GLIBC_KERNEL_VERSIONS_FILE| sed -n 's/^\+\(.*\)/\1/p' | grep -v '+' | cut -f1)
+)
+
+for version in "${GLIBC_VERSIONS[@]}"; do
+    # version=2.$version
     echo "Building glibc version $version"
     
     docker build \
@@ -12,9 +17,9 @@ for version in $(seq 41 -1 28); do
         -f Dockerfile \
         -t glibc-headers:$version .;
 
-    mkdir headers
+    mkdir -p headers
     docker create --name extract-headers-$version glibc-headers:$version /bin/true
-    docker cp extract-headers-$version:/glibc/headers/$version headers/$version
+    docker cp extract-headers-$version:/headers headers/$version
     docker rm extract-headers-$version
 
 done
