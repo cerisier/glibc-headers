@@ -2,7 +2,7 @@ FROM ubuntu:25.04 as downloader
 
 ARG GLIBC_VERSION=2.38
 
-RUN apt update && apt install -y git clang-20 make gawk bison wget lbzip2 zstd jq
+RUN apt update && apt install -y git clang-20 make gawk bison wget lbzip2 zstd jq bc
 RUN git clone --depth 1 --branch release/$GLIBC_VERSION/master https://sourceware.org/git/glibc.git /glibc
 
 COPY glibc_kernel_versions.txt /glibc_kernel_versions.txt
