@@ -5,7 +5,7 @@ SCRIPT_DIR=$(dirname "$0")
 KERNEL_HEADERS_BASE_DIR=${KERNEL_HEADERS_BASE_DIR:-"/dev/null"}
 
 GLIBC_VERSION=${1:-"2.38"}
-KERNEL_VERSION=$(cat $SCRIPT_DIR/glibc_kernel_version.txt | grep $GLIBC_VERSION | cut -f2)
+KERNEL_VERSION=$(cat $SCRIPT_DIR/glibc_kernel_versions.txt | grep $GLIBC_VERSION | cut -f2)
 
 SRC_DIR=$(pwd)
 BUILD_ROOT=$(pwd)/build/$GLIBC_VERSION
@@ -36,13 +36,20 @@ function process_target() {
   OUTPUT_DIR="${OUTPUT_ROOT}/${TARGET}"
   mkdir -p "${BUILD_DIR}" "${OUTPUT_DIR}"
 
+  if [[ -f "${OUTPUT_DIR}/include/gnu/stubs.h" ]]; then
+    echo "Headers already installed for ${TARGET}, skipping..."
+    return
+  fi
+
   cd "${BUILD_DIR}"
 
   echo "Configuring glibc for ${TARGET}..."
 
   EXTRA_FLAGS=""
-  if [[ "${TARGET}" == *"aarch64"* ]]; then
+  if [[ "${TARGET}" == aarch64* ]]; then
     EXTRA_FLAGS="--disable-mathvec"
+  elif [[ "${TARGET}" == "loongarch64"* ]]; then
+    EXTRA_FLAGS="CFLAGS=-mabi=lp64d CXXFLAGS=-mabi=lp64d"
   fi
 
   echo "libc_cv_pde_load_address=yes" > config.cache
