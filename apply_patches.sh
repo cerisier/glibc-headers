@@ -10,6 +10,8 @@ fi
 echo "Replacing __builtin_strstr -> strstr in ./configure"
 if [ -f ./configure ]; then
     sed -i 's/__builtin_strstr/strstr/g' ./configure
+    sed -i 's/4\.\[3-9\]\.\* | 4\.\[1-9\]\[0-9\]\.\* | \[5-9\]\.\* )/4.[3-9].* | 4.[1-9][0-9].* | [5-9].* | [1-9][0-9].* )/' ./configure
+    sed -i 's/3\.79\* | 3\.\[89\]\*)/3.79* | 3.[89]* | [4-9].* | [1-9][0-9].*)/' ./configure
 fi
 
 echo "Emptying optional configure files if they exist"

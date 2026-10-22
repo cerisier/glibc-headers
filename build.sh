@@ -15,12 +15,16 @@ function process_target() {
   TARGET=$1
   KERNEL_ARCH=$2
 
+  if [[ -n "${TARGETS:-}" && " ${TARGETS} " != *" ${TARGET} "* ]]; then
+    return
+  fi
+
   cd "${SRC_DIR}"
 
   CC="clang-20 -fgnuc-version=13"
   CXX="clang++-20 -fgnuc-version=13"
-  CROSS_CC="${CC} -target ${TARGET}"
-  CROSS_CXX="${CXX} -target ${TARGET}"
+  CROSS_CC="${CC} -target ${TARGET} -B/usr/local/bin -fuse-ld=lld"
+  CROSS_CXX="${CXX} -target ${TARGET} -B/usr/local/bin -fuse-ld=lld"
 
   # CC="$(pwd)/gcc-13.2.0-nolibc/aarch64-linux/bin/aarch64-linux-gcc"
   # CXX="$(pwd)/gcc-13.2.0-nolibc/aarch64-linux/bin/aarch64-linux-g++"
@@ -52,8 +56,18 @@ function process_target() {
     EXTRA_FLAGS="CFLAGS=-mabi=lp64d CXXFLAGS=-mabi=lp64d"
   fi
 
-  echo "libc_cv_pde_load_address=yes" > config.cache
-  echo "libc_cv_ctors_header=yes=yes" >> config.cache
+  cat > config.cache <<EOF
+libc_cv_pde_load_address=yes
+libc_cv_ctors_header=yes=yes
+libc_cv_visibility_attribute=yes
+libc_cv_broken_visibility_attribute=no
+libc_cv_broken_alias_attribute=no
+libc_cv_initfini_array=yes
+libc_cv_ld_no_whole_archive=yes
+libc_cv_gcc_tls_model_attr=yes
+libc_cv_forced_unwind=yes
+libc_cv_c_cleanup=yes
+EOF
 
   "${SRC_DIR}/configure" \
     --host="${TARGET}" \
@@ -61,10 +75,14 @@ function process_target() {
   	--cache-file=config.cache \
     --disable-werror \
     --with-headers=$KERNEL_HEADERS_BASE_DIR/$KERNEL_ARCH/include \
-    $EXTRA_FLAGS CC="${CROSS_CC}" CXX="${CROSS_CXX}"
+    $EXTRA_FLAGS \
+    CC="${CROSS_CC}" \
+    CXX="${CROSS_CXX}" \
+    CPP="${CC} -E" \
+    CXXCPP="${CXX} -E"
 
   echo "Installing headers for ${TARGET}..."
-  make CC="${CROSS_CC}" CXX="${CROSS_CXX}" ARCH=${KERNEL_ARCH} BUILD_CC="${CC}" cross-compiling=yes install-headers
+  make CC="${CROSS_CC}" CXX="${CROSS_CXX}" ARCH=${KERNEL_ARCH} BUILD_CC="${HOST_CC:-clang-20}" cross-compiling=yes install-headers
 
   touch "${OUTPUT_DIR}/include/gnu/stubs.h"
   touch "${OUTPUT_DIR}/include/bits/stdio_lim.h"
