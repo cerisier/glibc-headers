@@ -24,12 +24,15 @@ RUN git clone --depth 1 --branch release/$GLIBC_VERSION/master https://sourcewar
 COPY glibc_kernel_versions.txt /glibc_kernel_versions.txt
 RUN cat /glibc_kernel_versions.txt
 
-RUN set -x && export KERNEL_VERSION=$(cat /glibc_kernel_versions.txt | grep $GLIBC_VERSION | cut -f2) && \
+RUN set -ex && export KERNEL_VERSION=$(awk -v version="$GLIBC_VERSION" '$1 == version { print $2 }' /glibc_kernel_versions.txt) && \
+    test -n "$KERNEL_VERSION" && \
     wget -O /index.json https://cerisier.github.io/kernel-headers/index.json && \
     mkdir /kernel-headers && \
-    jq -r ".[\"$KERNEL_VERSION\"][].url" /index.json | while read -r DOWNLOAD_URL; do \
-        wget -qO- "$DOWNLOAD_URL" | tar --zstd -xf - -C /kernel-headers; \
-    done
+    jq -er ".[\"$KERNEL_VERSION\"][].url" /index.json > /kernel-urls && \
+    while read -r DOWNLOAD_URL; do \
+        wget -q "$DOWNLOAD_URL" -O /kernel.tar.zst && \
+        tar --zstd -xf /kernel.tar.zst -C /kernel-headers || exit 1; \
+    done < /kernel-urls
 
 FROM downloader as builder
 

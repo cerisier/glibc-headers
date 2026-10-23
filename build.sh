@@ -5,7 +5,7 @@ SCRIPT_DIR=$(dirname "$0")
 KERNEL_HEADERS_BASE_DIR=${KERNEL_HEADERS_BASE_DIR:-"/dev/null"}
 
 GLIBC_VERSION=${1:-"2.38"}
-KERNEL_VERSION=$(cat $SCRIPT_DIR/glibc_kernel_versions.txt | grep $GLIBC_VERSION | cut -f2)
+KERNEL_VERSION=$(awk -v version="$GLIBC_VERSION" '$1 == version { print $2 }' "$SCRIPT_DIR/glibc_kernel_versions.txt")
 
 SRC_DIR=$(pwd)
 BUILD_ROOT=$(pwd)/build/$GLIBC_VERSION
@@ -68,6 +68,10 @@ libc_cv_gcc_tls_model_attr=yes
 libc_cv_forced_unwind=yes
 libc_cv_c_cleanup=yes
 EOF
+  if [[ $(echo "$GLIBC_VERSION < 2.28" | bc) -eq 1 ]]; then
+    # The old PowerPC relocation probe is irrelevant to install-headers.
+    echo "libc_cv_ppc_rel16=yes" >> config.cache
+  fi
 
   "${SRC_DIR}/configure" \
     --host="${TARGET}" \
@@ -78,8 +82,9 @@ EOF
     $EXTRA_FLAGS \
     CC="${CROSS_CC}" \
     CXX="${CROSS_CXX}" \
-    CPP="${CC} -E" \
-    CXXCPP="${CXX} -E"
+    LD=/usr/local/bin/ld \
+    CPP="${CROSS_CC} -E" \
+    CXXCPP="${CROSS_CXX} -E"
 
   echo "Installing headers for ${TARGET}..."
   make CC="${CROSS_CC}" CXX="${CROSS_CXX}" ARCH=${KERNEL_ARCH} BUILD_CC="${HOST_CC:-clang-20}" cross-compiling=yes install-headers
@@ -117,14 +122,18 @@ process_target "mips64el-linux-gnuabin32"   mips
 process_target "powerpc-linux-gnueabi"      powerpc
 process_target "powerpc-linux-gnueabihf"    powerpc
 process_target "powerpc64-linux-gnu"        powerpc
-process_target "powerpc64le-linux-gnu"      powerpc
+if [[ $(echo "$GLIBC_VERSION >= 2.19" | bc) -eq 1 ]]; then
+    process_target "powerpc64le-linux-gnu"      powerpc
+fi
 
 # risvc32 is only supported in glibc >= 2.32
 if [[ $(echo "$GLIBC_VERSION >= 2.32" | bc) -eq 1 ]]; then
     process_target "riscv32-linux-gnu"          riscv # glibc >= 2.32
 fi
 
-process_target "riscv64-linux-gnu"          riscv
+if [[ $(echo "$GLIBC_VERSION >= 2.27" | bc) -eq 1 ]]; then
+    process_target "riscv64-linux-gnu"          riscv
+fi
 process_target "s390x-linux-gnu"            s390
 process_target "sparc-linux-gnu"            sparc
 process_target "sparc64-linux-gnu"          sparc
