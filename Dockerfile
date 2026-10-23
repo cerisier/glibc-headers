@@ -1,7 +1,5 @@
 FROM ubuntu:25.04 as downloader
 
-ARG GLIBC_VERSION=2.38
-
 RUN apt update && apt install -y git clang-20 lld-20 make gawk bison wget lbzip2 zstd jq bc && \
     printf '%s\n' \
         '#!/bin/sh' \
@@ -19,6 +17,8 @@ RUN apt update && apt install -y git clang-20 lld-20 make gawk bison wget lbzip2
         'exec /usr/bin/ld.lld-20 "$@"' \
         > /usr/local/bin/ld && \
     chmod +x /usr/local/bin/ld
+
+ARG GLIBC_VERSION=2.38
 RUN git clone --depth 1 --branch release/$GLIBC_VERSION/master https://sourceware.org/git/glibc.git /glibc
 
 COPY glibc_kernel_versions.txt /glibc_kernel_versions.txt
