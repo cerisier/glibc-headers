@@ -18,21 +18,20 @@ RUN apt update && apt install -y git clang-20 lld-20 make gawk bison wget lbzip2
         > /usr/local/bin/ld && \
     chmod +x /usr/local/bin/ld
 
-ARG GLIBC_VERSION=2.38
-RUN git clone --depth 1 --branch release/$GLIBC_VERSION/master https://sourceware.org/git/glibc.git /glibc
-
-COPY glibc_kernel_versions.txt /glibc_kernel_versions.txt
-RUN cat /glibc_kernel_versions.txt
-
-RUN set -ex && export KERNEL_VERSION=$(awk -v version="$GLIBC_VERSION" '$1 == version { print $2 }' /glibc_kernel_versions.txt) && \
-    test -n "$KERNEL_VERSION" && \
+ARG KERNEL_VERSION=7.0.10
+RUN set -ex && \
     wget -O /index.json https://cerisier.github.io/kernel-headers/index.json && \
     mkdir /kernel-headers && \
-    jq -er ".[\"$KERNEL_VERSION\"][].url" /index.json > /kernel-urls && \
+    jq -er --arg version "$KERNEL_VERSION" \
+        '.[$version] | to_entries[] | select(.key | test("^[a-z]")) | .value.url' \
+        /index.json > /kernel-urls && \
     while read -r DOWNLOAD_URL; do \
         wget -q "$DOWNLOAD_URL" -O /kernel.tar.zst && \
         tar --zstd -xf /kernel.tar.zst -C /kernel-headers || exit 1; \
     done < /kernel-urls
+
+ARG GLIBC_VERSION=2.38
+RUN git clone --depth 1 --branch release/$GLIBC_VERSION/master https://sourceware.org/git/glibc.git /glibc
 
 FROM downloader as builder
 

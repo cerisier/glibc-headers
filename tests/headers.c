@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 #include <dlfcn.h>
 #include <signal.h>
@@ -28,6 +29,11 @@ CHECK(sizeof(uint64_t) == 8, "uint64_t ABI");
 CHECK(sizeof(off_t) == 8, "large file ABI");
 CHECK(__BYTE_ORDER == __BYTE_ORDER__, "byte order");
 CHECK(UINT64_C(1) == 1 && UINT32_MAX == 4294967295U, "integer macros");
+CHECK(SYS_read == __NR_read, "read syscall alias");
+CHECK(SYS_getrandom == __NR_getrandom, "getrandom syscall alias");
+#ifdef __x86_64__
+CHECK(SYS_arch_prctl == __NR_arch_prctl, "x86 syscall alias");
+#endif
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 const char *format = "%" PRIx64;

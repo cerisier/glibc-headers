@@ -1,11 +1,9 @@
 #!/bin/bash
 set -e
 
-SCRIPT_DIR=$(dirname "$0")
 KERNEL_HEADERS_BASE_DIR=${KERNEL_HEADERS_BASE_DIR:-"/dev/null"}
 
 GLIBC_VERSION=${1:-"2.38"}
-KERNEL_VERSION=$(awk -v version="$GLIBC_VERSION" '$1 == version { print $2 }' "$SCRIPT_DIR/glibc_kernel_versions.txt")
 
 SRC_DIR=$(pwd)
 BUILD_ROOT=$(pwd)/build/$GLIBC_VERSION

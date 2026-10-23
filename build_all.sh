@@ -2,17 +2,17 @@
 
 set -euo pipefail
 
-GLIBC_KERNEL_VERSIONS_FILE="glibc_kernel_versions.txt"
+GLIBC_VERSIONS_FILE="glibc_versions.txt"
 if [[ $# -gt 0 ]]; then
     GLIBC_VERSIONS=("$@")
 else
     GLIBC_VERSIONS=(
-        $(git diff --unified=0 "$GLIBC_KERNEL_VERSIONS_FILE" | sed -n 's/^+\([0-9].*\)/\1/p' | cut -f1)
+        $(git diff --unified=0 "$GLIBC_VERSIONS_FILE" | sed -n 's/^+\([0-9].*\)/\1/p')
     )
 fi
 
 for version in "${GLIBC_VERSIONS[@]}"; do
-    if ! awk -v version="$version" '$1 == version { found = 1 } END { exit !found }' "$GLIBC_KERNEL_VERSIONS_FILE"; then
+    if ! grep -Fxq -- "$version" "$GLIBC_VERSIONS_FILE"; then
         echo "Unknown glibc version: $version" >&2
         exit 1
     fi
