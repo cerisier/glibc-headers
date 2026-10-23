@@ -1,0 +1,7 @@
+.git
+.agents
+headers
+tmp
+gh-pages-out
+*.tar.gz
+*.tar.zst
