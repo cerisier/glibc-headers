@@ -92,7 +92,11 @@ EOF
     # The old x32 syscall generator needs echo to preserve literal backslashes.
     MAKE_FLAGS+=(SHELL=/bin/bash)
   fi
-  make "${MAKE_FLAGS[@]}" CC="${CROSS_CC}" CXX="${CROSS_CXX}" ARCH=${KERNEL_ARCH} BUILD_CC="${HOST_CC:-clang-20}" cross-compiling=yes install-headers
+  if [[ $(echo "$GLIBC_VERSION >= 2.24 && $GLIBC_VERSION < 2.28" | bc) -eq 1 ]]; then
+    # C++ test-header copies require a cross C++ library, unused by install-headers.
+    MAKE_FLAGS+=(CXX=)
+  fi
+  make CC="${CROSS_CC}" CXX="${CROSS_CXX}" ARCH=${KERNEL_ARCH} BUILD_CC="${HOST_CC:-clang-20}" "${MAKE_FLAGS[@]}" cross-compiling=yes install-headers
 
   touch "${OUTPUT_DIR}/include/gnu/stubs.h"
   touch "${OUTPUT_DIR}/include/bits/stdio_lim.h"
