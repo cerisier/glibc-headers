@@ -2,6 +2,9 @@
 
 set -euxo pipefail
 
+# Keep macOS metadata sidecars out of local archives.
+export COPYFILE_DISABLE=1
+
 # --local keeps the archives without creating tags or publishing a release.
 PUBLISH=yes
 if [[ "${1:-}" == --local ]]; then
