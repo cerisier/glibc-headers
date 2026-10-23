@@ -36,6 +36,10 @@ echo "$CPP"\
 fi
 
 echo "Emptying optional configure files if they exist"
+# These releases keep the optional binary128/POWER8 runtime probes here.
+if [[ ( "$1" == 2.26 || "$1" == 2.27 ) && -f sysdeps/powerpc/powerpc64le/configure ]]; then
+    : > sysdeps/powerpc/powerpc64le/configure
+fi
 for file in \
     sysdeps/ieee754/ldbl-opt/configure \
     sysdeps/powerpc/powerpc64/le/configure \
