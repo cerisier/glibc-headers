@@ -87,7 +87,12 @@ EOF
     CXXCPP="${CROSS_CXX} -E"
 
   echo "Installing headers for ${TARGET}..."
-  make CC="${CROSS_CC}" CXX="${CROSS_CXX}" ARCH=${KERNEL_ARCH} BUILD_CC="${HOST_CC:-clang-20}" cross-compiling=yes install-headers
+  MAKE_FLAGS=()
+  if [[ "$TARGET" == x86_64-linux-gnux32 && $(echo "$GLIBC_VERSION >= 2.19 && $GLIBC_VERSION < 2.28" | bc) -eq 1 ]]; then
+    # The old x32 syscall generator needs echo to preserve literal backslashes.
+    MAKE_FLAGS+=(SHELL=/bin/bash)
+  fi
+  make "${MAKE_FLAGS[@]}" CC="${CROSS_CC}" CXX="${CROSS_CXX}" ARCH=${KERNEL_ARCH} BUILD_CC="${HOST_CC:-clang-20}" cross-compiling=yes install-headers
 
   touch "${OUTPUT_DIR}/include/gnu/stubs.h"
   touch "${OUTPUT_DIR}/include/bits/stdio_lim.h"
