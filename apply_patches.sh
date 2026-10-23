@@ -10,7 +10,7 @@ fi
 echo "Replacing __builtin_strstr -> strstr in ./configure"
 if [ -f ./configure ]; then
     sed -i 's/__builtin_strstr/strstr/g' ./configure
-    sed -i 's/4\.\[3-9\]\.\* | 4\.\[1-9\]\[0-9\]\.\* | \[5-9\]\.\* )/4.[3-9].* | 4.[1-9][0-9].* | [5-9].* | [1-9][0-9].* )/' ./configure
+    sed -i 's/ | \[5-9\]\.\* )/ | [5-9].* | [1-9][0-9].* )/' ./configure
     sed -i 's/3\.79\* | 3\.\[89\]\*)/3.79* | 3.[89]* | [4-9].* | [1-9][0-9].*)/' ./configure
 
     # Backport glibc bb931195fe780bb63e3d57d0742abad1d2128424 (2.18):
