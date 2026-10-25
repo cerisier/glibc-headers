@@ -35,6 +35,12 @@ echo "$CPP"\
     fi
 fi
 
+# Legacy syscall lists are enumerated from the build-time kernel headers.
+# Guard aliases against the consumer's kernel headers, as glibc 2.27+ does.
+if [[ $(echo "$1 >= 2.17 && $1 < 2.27" | bc) -eq 1 ]]; then
+    sed -i "s/LC_ALL=C sort/LC_ALL=C sort | awk '{print \"#ifdef \" \$\$3; print; print \"#endif\"}'/" sysdeps/unix/sysv/linux/Makefile
+fi
+
 echo "Emptying optional configure files if they exist"
 # These releases keep the optional binary128/POWER8 runtime probes here.
 if [[ ( "$1" == 2.26 || "$1" == 2.27 ) && -f sysdeps/powerpc/powerpc64le/configure ]]; then

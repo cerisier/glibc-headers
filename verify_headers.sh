@@ -52,6 +52,8 @@ for target_dir in "$HEADERS_DIR"/*; do
     clang-20 "${FLAGS[@]}" -std=gnu11 -c "$SCRIPT_DIR/tests/headers.c" -o "$OUTPUT_DIR/$target.c.o"
     clang++-20 "${FLAGS[@]}" -std=c++11 -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
         -D__STDC_FORMAT_MACROS -x c++ -c "$SCRIPT_DIR/tests/headers.c" -o "$OUTPUT_DIR/$target.cxx.o"
+    clang-20 "${FLAGS[@]}" -std=gnu11 -c "$SCRIPT_DIR/tests/syscall.c" -o "$OUTPUT_DIR/$target.syscall.c.o"
+    clang++-20 "${FLAGS[@]}" -std=c++11 -x c++ -c "$SCRIPT_DIR/tests/syscall.c" -o "$OUTPUT_DIR/$target.syscall.cxx.o"
     readelf -h "$OUTPUT_DIR/$target.c.o" "$OUTPUT_DIR/$target.cxx.o" > "$OUTPUT_DIR/$target.elf.txt"
 
     case "$target" in
